@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolarGuard — Data Center Protection System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #111419;
+    --bg3: #181c23;
+    --border: #1e2530;
+    --border2: #252d3a;
+    --text: #c8d0dc;
+    --text2: #7a8699;
+    --text3: #4a5568;
+    --accent: #00d4ff;
+    --accent2: #0099bb;
+    --green: #00e87a;
+    --green2: #00a855;
+    --red: #ff4560;
+    --red2: #cc2040;
+    --orange: #ffb347;
+    --yellow: #ffd700;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text2); font-weight: 300; }
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--green);
+    background: rgba(0,232,122,0.08);
+    border: 1px solid rgba(0,232,122,0.2);
+    padding: 4px 10px;
+    border-radius: 2px;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* LAYOUT */
+  .main { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 52px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .day-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .day-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 8px 4px;
+    cursor: pointer;
+    border-radius: 2px;
+    text-align: center;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  .day-btn:hover { border-color: var(--accent2); color: var(--text); }
+  .day-btn.active { background: rgba(0,212,255,0.1); border-color: var(--accent); color: var(--accent); }
+  .day-btn .day-type { font-size: 8px; color: var(--text3); display: block; margin-top: 2px; }
+  .day-btn.clear .day-type { color: var(--green2); }
+  .day-btn.variable .day-type { color: var(--red2); }
+  .day-btn.mixed .day-type { color: var(--orange); }
+
+  .control-group { margin-bottom: 14px; }
+  .control-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text2);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .control-value {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 3px;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 2px;
+  }
+
+  /* DC PARAMS */
+  .dc-input-group { margin-bottom: 10px; }
+  .dc-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text3);
+    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+  }
+  .dc-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .dc-input:focus { border-color: var(--accent2); }
+
+  /* MAIN CONTENT */
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  /* METRICS BAR */
+  .metrics-bar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 16px;
+  }
+  .metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .metric-value {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .metric-sub {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text3);
+  }
+  .mv-green { color: var(--green); }
+  .mv-red   { color: var(--red); }
+  .mv-orange{ color: var(--orange); }
+  .mv-accent{ color: var(--accent); }
+  .mv-text  { color: var(--text); }
+
+  /* CHARTS AREA */
+  .charts-area {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    height: calc(100vh - 52px - 60px);
+  }
+
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px;
+  }
+  .chart-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: var(--text3);
+  }
+  .legend-dot {
+    width: 8px; height: 3px;
+    border-radius: 1px;
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  canvas { width: 100% !important; display: block; }
+
+  .chart-card { overflow: hidden; }
+
+  .chart-wrapper-main { position: relative; height: 200px; width: 100%; }
+  .chart-wrapper-prob { position: relative; height: 80px; width: 100%; margin-top: 10px; }
+
+  /* ROI TABLE */
+  .roi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .roi-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 12px;
+    border-radius: 2px;
+  }
+  .roi-card-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .roi-card-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--green);
+    line-height: 1;
+  }
+  .roi-card-sub {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 3px;
+    font-family: var(--mono);
+  }
+  .roi-card.warning .roi-card-value { color: var(--orange); }
+  .roi-card.danger  .roi-card-value { color: var(--red); }
+  .roi-card.neutral .roi-card-value { color: var(--accent); }
+
+  /* ALERT LOG */
+  .alert-log {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 10px 12px;
+    max-height: 100px;
+    overflow-y: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text2);
+    line-height: 1.8;
+  }
+  .log-tp { color: var(--green); }
+  .log-fp { color: var(--orange); }
+  .log-fn { color: var(--red); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 1px;
+    letter-spacing: 0.05em;
+  }
+  .tag-clear    { background: rgba(0,232,122,0.1); color: var(--green); border: 1px solid rgba(0,232,122,0.2); }
+  .tag-variable { background: rgba(255,69,96,0.1); color: var(--red); border: 1px solid rgba(255,69,96,0.2); }
+  .tag-mixed    { background: rgba(255,179,71,0.1); color: var(--orange); border: 1px solid rgba(255,179,71,0.2); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">SOLAR<span>GUARD</span> // DC-PROTECT v2.1</div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">NREL · Golden, CO · 39.74°N</span>
+    <div class="status-pill"><div class="status-dot"></div>LIVE SIM</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div>
+      <div class="section-label">Seleccionar día</div>
+      <div class="day-grid" id="dayGrid"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-label">Parámetros del modelo</div>
+      <div class="control-group">
+        <div class="control-label">
+          Threshold <span class="control-value" id="threshVal">0.25</span>
+        </div>
+        <input type="range" id="threshSlider" min="5" max="50" value="25" step="1">
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">
+          <span>↑ Recall</span><span>↑ Precisión</span>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">
+          Horizonte <span class="control-value" id="horizVal">30 min</span>
+        </div>
+        <input type="range" id="horizSlider" min="5" max="60" value="30" step="5">
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">
+          <span>5 min</span><span>60 min</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-label">Data Center — Parámetros</div>
+      <div class="dc-input-group">
+        <div class="dc-label">COSTO POR MINUTO DE DOWNTIME (USD)</div>
+        <input type="number" class="dc-input" id="costDowntime" value="5000" min="100" max="500000" step="500">
+      </div>
+      <div class="dc-input-group">
+        <div class="dc-label">APAGONES TÍPICOS / MES</div>
+        <input type="number" class="dc-input" id="apagonesMes" value="12" min="1" max="100">
+      </div>
+      <div class="dc-input-group">
+        <div class="dc-label">DURACIÓN PROMEDIO APAGÓN (min)</div>
+        <input type="number" class="dc-input" id="duracionApagon" value="3" min="1" max="60">
+      </div>
+      <div class="dc-input-group">
+        <div class="dc-label">PRECIO DISPOSITIVO (USD)</div>
+        <input type="number" class="dc-input" id="precioDispositivo" value="8500" min="1000" max="100000" step="500">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-label">AUC por horizonte</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text2);line-height:2">
+        <div style="display:flex;justify-content:space-between"><span>5 min</span><span style="color:var(--green)">0.939</span></div>
+        <div style="display:flex;justify-content:space-between"><span>10 min</span><span style="color:var(--green)">0.937</span></div>
+        <div style="display:flex;justify-content:space-between"><span>20 min</span><span style="color:var(--green)">0.940</span></div>
+        <div style="display:flex;justify-content:space-between"><span>30 min</span><span style="color:var(--accent)">0.931</span></div>
+        <div style="display:flex;justify-content:space-between"><span>45 min</span><span style="color:var(--accent)">0.921</span></div>
+        <div style="display:flex;justify-content:space-between"><span>60 min</span><span style="color:var(--orange)">0.900</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- METRICS BAR -->
+    <div class="metrics-bar">
+      <div class="metric">
+        <div class="metric-label">AUC-ROC</div>
+        <div class="metric-value mv-accent" id="m-auc">0.931</div>
+        <div class="metric-sub">LightGBM v2</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Recall</div>
+        <div class="metric-value mv-green" id="m-recall">—</div>
+        <div class="metric-sub">eventos detectados</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Precisión</div>
+        <div class="metric-value mv-accent" id="m-prec">—</div>
+        <div class="metric-sub">alertas correctas</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">TP / FN / FP</div>
+        <div class="metric-value mv-text" id="m-counts" style="font-size:13px;padding-top:3px">— / — / —</div>
+        <div class="metric-sub">día seleccionado</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Ahorro / mes</div>
+        <div class="metric-value mv-green" id="m-ahorro">$—</div>
+        <div class="metric-sub">apagones anticipados</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Ahorro / año</div>
+        <div class="metric-value mv-green" id="m-ahorro-year">$—</div>
+        <div class="metric-sub">proyección anual</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Payback</div>
+        <div class="metric-value mv-orange" id="m-payback">— meses</div>
+        <div class="metric-sub">retorno inversión</div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="charts-area">
+
+      <div class="chart-card">
+        <div class="chart-title">
+          <span>IRRADIANCIA SOLAR + PREDICCIÓN DE CAÍDA <span id="dayTag" class="tag tag-clear">CLEAR SKY</span></span>
+          <div class="chart-legend">
+            <span><span class="legend-dot" style="background:#00d4ff"></span>Irradiancia (W/m²)</span>
+            <span><span class="legend-dot" style="background:#ffb347"></span>P(caída)</span>
+            <span><span class="legend-dot" style="background:#00e87a;height:8px;width:8px;border-radius:50%"></span>TP</span>
+            <span><span class="legend-dot" style="background:#ff4560;height:8px;width:8px;border-radius:50%"></span>FN</span>
+            <span><span class="legend-dot" style="background:#ffd700;height:8px;width:8px;border-radius:50%;opacity:0.6"></span>FP</span>
+          </div>
+        </div>
+        <div class="chart-wrapper-main"><canvas id="mainChart"></canvas></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1">
+
+        <div class="chart-card">
+          <div class="chart-title">ROI — ANÁLISIS ECONÓMICO</div>
+          <div class="roi-grid">
+            <div class="roi-card neutral">
+              <div class="roi-card-label">Costo apagón</div>
+              <div class="roi-card-value" id="roi-costo">$—</div>
+              <div class="roi-card-sub">por evento</div>
+            </div>
+            <div class="roi-card">
+              <div class="roi-card-label">Anticipados/mes</div>
+              <div class="roi-card-value" id="roi-anticipados">—</div>
+              <div class="roi-card-sub">de <span id="roi-total-mes">—</span> eventos</div>
+            </div>
+            <div class="roi-card warning">
+              <div class="roi-card-label">Residuales/mes</div>
+              <div class="roi-card-value" id="roi-residuales">—</div>
+              <div class="roi-card-sub">sin protección</div>
+            </div>
+            <div class="roi-card">
+              <div class="roi-card-label">Ahorro bruto/año</div>
+              <div class="roi-card-value" id="roi-ahorro-anual">$—</div>
+              <div class="roi-card-sub">USD</div>
+            </div>
+            <div class="roi-card neutral">
+              <div class="roi-card-label">Payback</div>
+              <div class="roi-card-value" id="roi-payback">—</div>
+              <div class="roi-card-sub">meses</div>
+            </div>
+            <div class="roi-card">
+              <div class="roi-card-label">ROI 3 años</div>
+              <div class="roi-card-value" id="roi-3y">—x</div>
+              <div class="roi-card-sub">retorno</div>
+            </div>
+            <div class="roi-card warning">
+              <div class="roi-card-label">Falsas alarmas/mes</div>
+              <div class="roi-card-value" id="roi-falsas" style="font-size:18px">—</div>
+              <div class="roi-card-sub" id="roi-costo-fp">costo FP</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">LOG DE ALERTAS — DÍA SELECCIONADO</div>
+          <div class="alert-log" id="alertLog">
+            <span style="color:var(--text3)">// Selecciona un día para ver el log de alertas...</span>
+          </div>
+          <div class="chart-wrapper-prob"><canvas id="probChart"></canvas></div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+<script>
+
+// =====================================================
+// SYNTHETIC DATA — based on real NREL patterns
+// =====================================================
+
+function generateDay(type, seed) {
+  const rng = (s) => { let x = Math.sin(s)*10000; return x - Math.floor(x); };
+  const hours = [];
+  const irrad = [];
+  const diffFrac = [];
+
+  for (let m = 420; m <= 960; m += 2) { // 7:00 to 16:00 in 2-min steps
+    const h = m / 60;
+    const zenith = Math.abs(h - 12.5) / 6.5;
+    const clearSky = Math.max(0, 950 * Math.cos(zenith * Math.PI / 2));
+    hours.push(`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`);
+
+    let g, df;
+    const ri = rng(seed + m);
+
+    if (type === 'clear') {
+      // Smooth curve, minimal clouds
+      const cloud = ri < 0.05 ? (0.3 + ri * 2) : 0;
+      g = clearSky * (1 - cloud) + (ri - 0.5) * 8;
+      df = cloud > 0 ? 0.6 + rng(seed+m+1)*0.3 : 0.08 + rng(seed+m+2)*0.08;
+    } else if (type === 'variable') {
+      // High variability — many clouds
+      const t = m / 60;
+      const wave1 = Math.sin(t * 3.7 + seed) * 0.35;
+      const wave2 = Math.sin(t * 7.2 + seed + 1) * 0.2;
+      const wave3 = rng(seed+m+3) < 0.3 ? -(0.3 + rng(seed+m+4)*0.4) : 0;
+      const cloudFactor = Math.max(0.15, Math.min(1, 0.7 + wave1 + wave2 + wave3));
+      g = clearSky * cloudFactor;
+      df = (1 - cloudFactor) * 0.8 + 0.1 + rng(seed+m+5)*0.1;
+    } else { // mixed
+      const isCloudPeriod = (h > 10.5 && h < 12) || (h > 14 && h < 15.5);
+      if (isCloudPeriod) {
+        const depth = 0.4 + rng(seed+m+6)*0.4;
+        g = clearSky * (1 - depth);
+        df = depth * 0.8 + 0.1;
+      } else {
+        const smallCloud = rng(seed+m+7) < 0.12 ? rng(seed+m+8)*0.25 : 0;
+        g = clearSky * (1 - smallCloud);
+        df = smallCloud > 0 ? 0.4 + rng(seed+m+9)*0.3 : 0.08 + rng(seed+m+10)*0.06;
+      }
+    }
+
+    irrad.push(Math.max(10, Math.round(g)));
+    diffFrac.push(Math.min(1, Math.max(0, df)));
+  }
+
+  return { hours, irrad, diffFrac };
+}
+
+// Model: simplified LightGBM simulation
+function computeProba(irrad, diffFrac, horizonMin, idx) {
+  const windowBack = Math.min(idx, 15);
+  if (windowBack < 3) return 0.08 + Math.random() * 0.04;
+
+  const recent = irrad.slice(idx - windowBack, idx + 1);
+  const g0 = irrad[idx];
+  const gBack = recent[0];
+  const gMean = recent.reduce((a,b)=>a+b,0)/recent.length;
+  const gStd = Math.sqrt(recent.reduce((a,b)=>a+(b-gMean)**2,0)/recent.length);
+
+  // Slope (W/m²/min, normalized)
+  const slope = (g0 - gBack) / (windowBack * 2);
+  const df = diffFrac[idx];
+  const dfRecent = diffFrac.slice(idx-windowBack,idx+1);
+  const dfMean = dfRecent.reduce((a,b)=>a+b,0)/dfRecent.length;
+  const dfSlope = (df - dfRecent[0]) / (windowBack * 2);
+
+  // Feature contributions (mimicking SHAP patterns)
+  let logit = -2.8; // base log-odds (low base rate)
+
+  // G_cos_norm equivalent: low irradiance → higher risk
+  const gNorm = g0 / Math.max(gMean * 1.1, 100);
+  logit += (1 - gNorm) * 2.5;
+
+  // Diffuse fraction: high → risk
+  logit += df * 1.8;
+  logit += dfSlope * 15 * (horizonMin / 30);
+
+  // Slope: negative → risk
+  if (slope < 0) logit += Math.abs(slope) * 0.08;
+
+  // Variability
+  logit += (gStd / Math.max(gMean, 1)) * 1.2;
+
+  // Horizon adjustment: harder to predict far ahead
+  const horizonFactor = 1 - (horizonMin - 5) / 110;
+  logit *= horizonFactor;
+
+  // Add small noise
+  logit += (Math.random() - 0.5) * 0.3;
+
+  return 1 / (1 + Math.exp(-logit));
+}
+
+function labelDrops(irrad, horizonSteps) {
+  const labels = new Array(irrad.length).fill(0);
+  for (let i = 0; i < irrad.length - horizonSteps; i++) {
+    const future = irrad.slice(i+1, i+1+horizonSteps);
+    const minFuture = Math.min(...future);
+    const drop = (irrad[i] - minFuture) / irrad[i] * 100;
+    if (drop >= 30 && minFuture >= 50 && irrad[i] >= 100) {
+      // Only label start of sequence
+      if (i === 0 || labels[i-1] === 0) {
+        for (let j = i; j < Math.min(i+5, irrad.length); j++) {
+          if (irrad[j] >= 100) labels[j] = 1;
+        }
+      }
+    }
+  }
+  return labels;
+}
+
+// =====================================================
+// DAYS DEFINITION
+// =====================================================
+const DAYS = [
+  { id:'d1', label:'Dec 1', type:'clear',    seed:101, name:'2020-12-01' },
+  { id:'d2', label:'Dec 2', type:'variable', seed:202, name:'2020-12-02' },
+  { id:'d3', label:'Dec 3', type:'clear',    seed:303, name:'2020-12-03' },
+  { id:'d4', label:'Dec 9', type:'mixed',    seed:409, name:'2019-12-09' },
+  { id:'d5', label:'Mar 25',type:'variable', seed:525, name:'2020-03-25' },
+  { id:'d6', label:'Mar 31',type:'mixed',    seed:631, name:'2020-03-31' },
+  { id:'d7', label:'Sep 15',type:'clear',    seed:715, name:'2020-09-15' },
+  { id:'d8', label:'Oct 12',type:'variable', seed:812, name:'2020-10-12' },
+  { id:'d9', label:'Nov 8', type:'mixed',    seed:908, name:'2020-11-08' },
+];
+
+// =====================================================
+// STATE
+// =====================================================
+let currentDay = DAYS[0];
+let threshold = 0.25;
+let horizon = 30;
+let mainChart = null;
+let probChart = null;
+let currentRecall = 0.575;
+let currentPrec   = 0.515;
+let currentTP = 0, currentFP = 0, currentFN = 0;
+
+// =====================================================
+// BUILD SIDEBAR DAYS
+// =====================================================
+const dayGrid = document.getElementById('dayGrid');
+DAYS.forEach(d => {
+  const btn = document.createElement('button');
+  btn.className = `day-btn ${d.type}`;
+  btn.id = `btn-${d.id}`;
+  btn.innerHTML = `${d.label}<span class="day-type">${d.type.toUpperCase()}</span>`;
+  btn.onclick = () => selectDay(d);
+  dayGrid.appendChild(btn);
+});
+
+// =====================================================
+// SLIDERS
+// =====================================================
+document.getElementById('threshSlider').addEventListener('input', e => {
+  threshold = parseInt(e.target.value) / 100;
+  document.getElementById('threshVal').textContent = threshold.toFixed(2);
+  render();
+});
+
+document.getElementById('horizSlider').addEventListener('input', e => {
+  horizon = parseInt(e.target.value);
+  document.getElementById('horizVal').textContent = `${horizon} min`;
+  updateAUCDisplay();
+  render();
+});
+
+['costDowntime','apagonesMes','duracionApagon','precioDispositivo'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => updateEconomics());
+});
+
+function updateAUCDisplay() {
+  const aucMap = {5:0.939,10:0.937,15:0.935,20:0.940,25:0.938,30:0.931,35:0.923,40:0.923,45:0.921,50:0.914,55:0.900,60:0.900};
+  document.getElementById('m-auc').textContent = (aucMap[horizon] || 0.920).toFixed(3);
+}
+
+// =====================================================
+// SELECT DAY
+// =====================================================
+function selectDay(d) {
+  currentDay = d;
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`btn-${d.id}`).classList.add('active');
+
+  const tagEl = document.getElementById('dayTag');
+  tagEl.className = `tag tag-${d.type}`;
+  tagEl.textContent = d.type === 'clear' ? 'CLEAR SKY' : d.type === 'variable' ? 'HIGH VARIABILITY' : 'MIXED';
+
+  render();
+}
+
+// =====================================================
+// MAIN RENDER
+// =====================================================
+function render() {
+  const { hours, irrad, diffFrac } = generateDay(currentDay.type, currentDay.seed);
+  const horizonSteps = Math.ceil(horizon / 2);
+  const labels = labelDrops(irrad, horizonSteps);
+  const probas = irrad.map((_, i) => computeProba(irrad, diffFrac, horizon, i));
+
+  // Classify
+  let tp=0, fp=0, fn=0, tn=0;
+  const tpPts=[], fpPts=[], fnPts=[];
+
+  for (let i = 0; i < irrad.length; i++) {
+    const pred = probas[i] >= threshold ? 1 : 0;
+    const real = labels[i];
+    if (pred===1 && real===1) { tp++; tpPts.push({x:i,y:irrad[i]}); }
+    else if (pred===1 && real===0) { fp++; fpPts.push({x:i,y:irrad[i]}); }
+    else if (pred===0 && real===1) { fn++; fnPts.push({x:i,y:irrad[i]}); }
+    else tn++;
+  }
+
+  const recall = tp+fn > 0 ? tp/(tp+fn) : 0;
+  const prec   = tp+fp > 0 ? tp/(tp+fp) : 0;
+
+  // Store in global state so DC param changes use current model performance
+  currentRecall = recall;
+  currentPrec   = prec;
+  currentTP = tp; currentFP = fp; currentFN = fn;
+
+  // Update metrics
+  document.getElementById('m-recall').textContent = (recall*100).toFixed(0)+'%';
+  document.getElementById('m-prec').textContent   = (prec*100).toFixed(0)+'%';
+  document.getElementById('m-counts').textContent = `${tp} / ${fn} / ${fp}`;
+  document.getElementById('m-recall').className = `metric-value ${recall > 0.6 ? 'mv-green' : recall > 0.4 ? 'mv-orange' : 'mv-red'}`;
+
+  updateEconomics();
+  buildAlertLog(hours, irrad, probas, labels, threshold);
+  drawMainChart(hours, irrad, probas, labels, tpPts, fpPts, fnPts);
+  drawProbChart(hours, probas, threshold);
+}
+
+// =====================================================
+// ECONOMICS
+// =====================================================
+function updateEconomics() {
+  const costPerMin  = parseFloat(document.getElementById('costDowntime').value) || 5000;
+  const apMes       = parseFloat(document.getElementById('apagonesMes').value) || 12;
+  const durMin      = parseFloat(document.getElementById('duracionApagon').value) || 3;
+  const precio      = parseFloat(document.getElementById('precioDispositivo').value) || 8500;
+
+  // Always use current model performance from global state
+  const modelRecall = currentRecall;
+  const modelPrec   = currentPrec;
+
+  const costPerEvent  = costPerMin * durMin;
+  const anticipados   = Math.round(apMes * modelRecall);
+  const residuales    = apMes - anticipados;
+  const falsasAlarmas = modelPrec > 0 ? Math.round(anticipados / modelPrec * (1 - modelPrec)) : 0;
+  const costFP        = falsasAlarmas * 0.05;
+  const ahorroMes     = anticipados * costPerEvent - costFP;
+  const ahorroAnual   = ahorroMes * 12;
+  const payback       = ahorroMes > 0 ? precio / ahorroMes : 999;
+  const roi3y         = precio > 0 ? (ahorroAnual * 3 / precio) : 0;
+
+  const fmt = v => v >= 1000000 ? `$${(v/1000000).toFixed(1)}M` :
+                    v >= 1000    ? `$${(v/1000).toFixed(0)}K` : `$${Math.round(v)}`;
+
+  // Header metrics
+  document.getElementById('m-ahorro').textContent      = fmt(ahorroMes);
+  document.getElementById('m-ahorro-year').textContent = fmt(ahorroAnual);
+  document.getElementById('m-payback').textContent     = payback < 1 ? `<1 mes` : `${payback.toFixed(1)} meses`;
+  document.getElementById('m-payback').className       = `metric-value ${payback < 3 ? 'mv-green' : payback < 12 ? 'mv-orange' : 'mv-red'}`;
+
+  // ROI cards
+  document.getElementById('roi-costo').textContent        = fmt(costPerEvent);
+  document.getElementById('roi-anticipados').textContent  = anticipados;
+  document.getElementById('roi-total-mes').textContent    = apMes;
+  document.getElementById('roi-residuales').textContent   = residuales;
+  document.getElementById('roi-ahorro-anual').textContent = fmt(ahorroAnual);
+  document.getElementById('roi-payback').textContent      = payback < 1 ? '<1' : payback.toFixed(1);
+  document.getElementById('roi-3y').textContent           = `${roi3y.toFixed(1)}x`;
+
+  // Color roi-3y by value
+  document.querySelector('#roi-3y').closest('.roi-card').className =
+    `roi-card ${roi3y >= 5 ? '' : roi3y >= 2 ? 'warning' : 'danger'}`;
+
+  // Update false alarms display
+  document.getElementById('roi-falsas').textContent = falsasAlarmas;
+  document.getElementById('roi-costo-fp').textContent = `$${costFP.toFixed(2)}/mes`;
+}
+
+// =====================================================
+// ALERT LOG
+// =====================================================
+function buildAlertLog(hours, irrad, probas, labels, thresh) {
+  const log = document.getElementById('alertLog');
+  let html = '';
+  let lastType = null;
+  for (let i = 0; i < irrad.length; i++) {
+    const pred = probas[i] >= thresh ? 1 : 0;
+    const real = labels[i];
+    let type = null;
+    if (pred===1 && real===1 && lastType !== 'TP') type = 'TP';
+    else if (pred===1 && real===0 && lastType !== 'FP') type = 'FP';
+    else if (pred===0 && real===1 && lastType !== 'FN') type = 'FN';
+    if (type) {
+      const cls = `log-${type.toLowerCase()}`;
+      const msg = type==='TP' ? `⚡ ALERTA ANTICIPADA` : type==='FP' ? `○ FALSA ALARMA` : `✗ CAÍDA NO DETECTADA`;
+      html += `<div class="${cls}">[${hours[i]}] ${msg} — G=${irrad[i]} W/m² P=${probas[i].toFixed(2)}</div>`;
+      lastType = type;
+    } else if (pred===0 && real===0) lastType = null;
+  }
+  log.innerHTML = html || '<span style="color:var(--text3)">// Sin eventos en este día</span>';
+  log.scrollTop = log.scrollHeight;
+}
+
+// =====================================================
+// CHARTS
+// =====================================================
+function drawMainChart(hours, irrad, probas, labels, tpPts, fpPts, fnPts) {
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  if (mainChart) mainChart.destroy();
+
+  const maxIrrad = Math.max(...irrad);
+
+  mainChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: hours,
+      datasets: [
+        {
+          label: 'Irradiancia',
+          data: irrad,
+          borderColor: '#00d4ff',
+          backgroundColor: 'rgba(0,212,255,0.06)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          yAxisID: 'y'
+        },
+        {
+          label: 'P(caída)',
+          data: probas,
+          borderColor: '#ffb347',
+          backgroundColor: 'transparent',
+          tension: 0.3,
+          borderWidth: 1,
+          borderDash: [],
+          pointRadius: 0,
+          yAxisID: 'y2'
+        },
+        {
+          label: 'TP',
+          data: tpPts.map(p => ({ x: hours[p.x], y: p.y })),
+          type: 'scatter',
+          backgroundColor: '#00e87a',
+          borderColor: '#00e87a',
+          pointRadius: 5,
+          pointStyle: 'triangle',
+          yAxisID: 'y'
+        },
+        {
+          label: 'FP',
+          data: fpPts.map(p => ({ x: hours[p.x], y: p.y })),
+          type: 'scatter',
+          backgroundColor: 'rgba(255,215,0,0.6)',
+          borderColor: '#ffd700',
+          pointRadius: 4,
+          pointStyle: 'rectRot',
+          yAxisID: 'y'
+        },
+        {
+          label: 'FN',
+          data: fnPts.map(p => ({ x: hours[p.x], y: p.y })),
+          type: 'scatter',
+          backgroundColor: '#ff4560',
+          borderColor: '#ff4560',
+          pointRadius: 5,
+          pointStyle: 'crossRot',
+          yAxisID: 'y'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          backgroundColor: 'rgba(17,20,25,0.95)',
+          borderColor: '#252d3a',
+          borderWidth: 1,
+          titleColor: '#7a8699',
+          bodyColor: '#c8d0dc',
+          titleFont: { family: 'IBM Plex Mono', size: 10 },
+          bodyFont:  { family: 'IBM Plex Mono', size: 10 },
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(30,37,48,0.8)' },
+          ticks: { color: '#4a5568', font: { family:'IBM Plex Mono', size:9 }, maxTicksLimit:12 }
+        },
+        y: {
+          min: 0, max: 1050,
+          grid: { color: 'rgba(30,37,48,0.8)' },
+          ticks: { color: '#4a5568', font: { family:'IBM Plex Mono', size:9 }, callback: v => `${v}W` }
+        },
+        y2: {
+          position: 'right',
+          min: 0, max: 0.6,
+          grid: { display: false },
+          ticks: { color: '#ffb347', font: { family:'IBM Plex Mono', size:9 }, callback: v => v.toFixed(1) }
+        }
+      }
+    }
+  });
+}
+
+function drawProbChart(hours, probas, thresh) {
+  const ctx = document.getElementById('probChart').getContext('2d');
+  if (probChart) probChart.destroy();
+
+  const colors = probas.map(p => p >= thresh ?
+    'rgba(255,69,96,0.7)' : 'rgba(0,212,255,0.3)');
+
+  probChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: hours,
+      datasets: [{
+        data: probas,
+        backgroundColor: colors,
+        borderWidth: 0,
+        barPercentage: 1.0,
+        categoryPercentage: 1.0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 200 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+        annotation: {
+          annotations: {
+            threshLine: {
+              type: 'line',
+              yMin: thresh,
+              yMax: thresh,
+              borderColor: 'rgba(255,255,255,0.4)',
+              borderWidth: 1,
+              borderDash: [4, 3],
+              label: {
+                display: true,
+                content: `th=${thresh.toFixed(2)}`,
+                position: 'end',
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                color: '#fff',
+                font: { family: 'IBM Plex Mono', size: 8 },
+                padding: 2
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: { display: false },
+        y: {
+          min: 0, max: 0.55,
+          grid: { color: 'rgba(30,37,48,0.6)' },
+          ticks: { color: '#4a5568', font: { family:'IBM Plex Mono', size:8 }, maxTicksLimit: 3 }
+        }
+      }
+    }
+  });
+}
+
+// =====================================================
+// INIT
+// =====================================================
+selectDay(DAYS[0]);
+updateAUCDisplay();
+
+</script>
+</body>
+</html>
